@@ -11,13 +11,25 @@ dbutils.secrets.list("hpl-kv-scope")
 
 # COMMAND ----------
 
-service_credential = dbutils.secrets.get(scope="hpl-kv-scope",key="sp-hpl-secret")
-spark.conf.set("fs.azure.account.auth.type.hpldevarmdlsuw02.dfs.core.windows.net", "OAuth")
-spark.conf.set("fs.azure.account.oauth.provider.type.hpldevarmdlsuw02.dfs.core.windows.net", "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider")
-spark.conf.set("fs.azure.account.oauth2.client.id.hpldevarmdlsuw02.dfs.core.windows.net", "ec22a7b9-8444-44aa-89e6-6a8516b31a4e")
-spark.conf.set("fs.azure.account.oauth2.client.secret.hpldevarmdlsuw02.dfs.core.windows.net", service_credential)
-spark.conf.set("fs.azure.account.oauth2.client.endpoint.hpldevarmdlsuw02.dfs.core.windows.net", "https://login.microsoftonline.com/b1aa5d7c-c737-43a3-a8b2-6f42d289b689/oauth2/token") # tenant id
+def accessAzureAdlsGen2Storage():
+    '''
+     Before using this function please create the below secrtes in the azure key vault.
+     You also need to create the secret scope in your databricks workspace, need help pl. refer to below URL to create secret scopes in databricks.
+     https://learn.microsoft.com/en-us/azure/databricks/security/secrets/secret-scopes
+    '''        
+    service_credential = dbutils.secrets.get(scope="hpl-kv-scope",key="sp-hpl-secret")
+    service_client_id = dbutils.secrets.get(scope="hpl-kv-scope",key="sp-hpl-client-id")
+    tenant_directory_id = dbutils.secrets.get(scope="hpl-kv-scope",key="tenant-directory-id")
+    spark.conf.set("fs.azure.account.auth.type.hpldevarmdlsuw02.dfs.core.windows.net", "OAuth")
+    spark.conf.set("fs.azure.account.oauth.provider.type.hpldevarmdlsuw02.dfs.core.windows.net", "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider")
+    spark.conf.set("fs.azure.account.oauth2.client.id.hpldevarmdlsuw02.dfs.core.windows.net", service_client_id)
+    spark.conf.set("fs.azure.account.oauth2.client.secret.hpldevarmdlsuw02.dfs.core.windows.net", service_credential)
+    spark.conf.set("fs.azure.account.oauth2.client.endpoint.hpldevarmdlsuw02.dfs.core.windows.net", "https://login.microsoftonline.com/" + tenant_directory_id + "/oauth2/token") # tenant id
 
+
+# COMMAND ----------
+
+accessAzureAdlsGen2Storage
 
 # COMMAND ----------
 
