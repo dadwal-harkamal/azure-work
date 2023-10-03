@@ -13,6 +13,7 @@ dbutils.secrets.list("hpl-kv-scope")
 
 def accessAzureAdlsGen2Storage():
     '''
+     pre-requisite: Azure Service Principal with proper access to the respective storage account.
      Before using this function please create the below secrtes in the azure key vault.
      You also need to create the secret scope in your databricks workspace, need help pl. refer to below URL to create secret scopes in databricks.
      https://learn.microsoft.com/en-us/azure/databricks/security/secrets/secret-scopes
