@@ -114,7 +114,7 @@ from delta.tables import *
 df_del = DeltaTable.forPath(spark,delta_path)
 df_del.alias("tech_celebs")\
   .merge(stagedUpdates.alias("staged_updates"), "tech_celebs.personId = mergeKey")\
-  .whenMatchedUpdate(condition = "tech_celebs.isCurrent == true  AND staged_updates.country  <> tech_celebs.country OR staged_updates.region != tech_celebs.region", set = {
+  .whenMatchedUpdate(condition = "tech_celebs.isCurrent == true  AND (staged_updates.country  <> tech_celebs.country OR staged_updates.region != tech_celebs.region)", set = {
       "isCurrent" : "false",
       "endDate" : "staged_updates.effectiveDate"
       
