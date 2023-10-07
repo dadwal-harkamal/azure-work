@@ -31,7 +31,7 @@ clicks = (
   spark
   .readStream.format("rate").option("rowsPerSecond", "5").option("numPartitions", "1").load()
   .where((rand() * 100).cast("integer") < 10)      # 10 out of every 100 impressions result in a click
-  .selectExpr("(value - 50) AS adId ", "timestamp AS clickTime")      # -50 so that a click with same id as impression is generated later (i.e. delayed data).
+  .selectExpr("(value - 50) AS adId ", "timestamp AS clickTime") # -50 so that a click with same id as impression is generated later (i.e. delayed data).
   .where("adId > 0")
 )    
 display(clicks)
@@ -95,3 +95,17 @@ display(
     "leftOuter"
   )
 )
+
+# COMMAND ----------
+
+username = spark.sql("SELECT regexp_replace(current_user(), '[^a-zA-Z0-9]', '_')").first()[0]
+
+# COMMAND ----------
+
+user = spark.sql("SELECT regexp_replace(current_user(), '[^a-zA-Z0-9]', '_')")
+display(user.first())
+display(user)
+
+# COMMAND ----------
+
+print(username)
