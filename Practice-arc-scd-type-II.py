@@ -9,7 +9,7 @@ emp_path = "abfss://bronze@hpldevarmdlsuw02.dfs.core.windows.net/employeeData.cs
 scd_gpt_del_path = "abfss://bronze@hpldevarmdlsuw02.dfs.core.windows.net/scd-gpt"
 employee_df = spark.read.csv(emp_path,header=True,inferSchema=True)
 employee_df= employee_df.withColumn("StartDate", employee_df["StartDate"].cast("date")).withColumn("EndDate", employee_df["EndDate"].cast("date"))
-employee_df.write.format("delta").mode("overwrite").save(scd_gpt_del_path)
+# employee_df.write.format("delta").mode("overwrite").save(scd_gpt_del_path)
 display(employee_df)
 
 
@@ -17,6 +17,7 @@ display(employee_df)
 
 emp_mod_path = "abfss://bronze@hpldevarmdlsuw02.dfs.core.windows.net/employeeData_Modified.csv"
 employee_mod_df = spark.read.csv(emp_mod_path,header=True,inferSchema=True)
+employee_mod_df = employee_mod_df.distinct()
 display(employee_mod_df)
 
 # COMMAND ----------
