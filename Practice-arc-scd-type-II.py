@@ -68,6 +68,7 @@ final_df = spark.read.format("delta").load(scd_gpt_del_path).select('*').distinc
 final_df.write.format("delta").mode("overwrite").save(scd_gpt_del_path)
 display(spark.read.format("delta").load(scd_gpt_del_path))
 
+
 # COMMAND ----------
 
 combined_data = employee_df.union(employee_mod_df)
@@ -102,8 +103,8 @@ df.show()
 
 # COMMAND ----------
 
-up_val = [(1, "elon musk", "canada", "montreal", "1989-06-01"),\
-  (4, "dhh", "us", "chicago", "2005-11-01")]
+up_val = [(1, "elon musk", "canada", "Calgary", "1990-06-01"),\
+  (6, "fhh", "us", "chicago", "2005-11-01")]
 up_cols = ("personId", "personName", "country", "region", "effectiveDate")
 up_df = spark.createDataFrame(up_val,up_cols)
 up_df.show()
@@ -114,7 +115,7 @@ up_df.show()
 from pyspark.sql.functions import lit,col
 stagedPart1 = up_df.join(df, "personId")\
   .where( (df.isCurrent == True ) & (up_df.country != df.country) | (up_df.region != df.region))\
-  .select(up_df['*'])
+  .select(up_df['*']).distinct()
 stagedPart1 = stagedPart1.withColumn('mergeKey',lit('null'))
 stagedPart1.show()
 
@@ -154,6 +155,11 @@ df_del.alias("tech_celebs")\
 
 scd_ii_df = spark.read.format("delta").load(delta_path).orderBy('personId')
 display(scd_ii_df)
+
+# COMMAND ----------
+
+deltaTable = DeltaTable.forPath(spark, delta_path)
+deltaTable.delete("effectiveDate == '1990-06-01'")
 
 # COMMAND ----------
 
@@ -214,12 +220,44 @@ enforce_schema(null_field)
 
 # COMMAND ----------
 
+# MAGIC %md 
+# MAGIC First see if there is already a table at the respective path, if theer is already a tbel then drop it to show the Delta lke default schem enfrcement feature
+# MAGIC yu can drop teh table using  linux rm -rf command
+
+# COMMAND ----------
+
+dbutils.fs.rm("dbfs/FileStore/delta_table1/*",True) 
+
+# COMMAND ----------
+
+# MAGIC %sh
+# MAGIC rm -rf  /FileStore/delta_table1/_delta_log/
+
+# COMMAND ----------
+
+# MAGIC %fs ls /FileStore/delta_table1/
+
+# COMMAND ----------
+
+# MAGIC %fs ls /
+
+# COMMAND ----------
+
+from delta.tables import DeltaTable
 columns = ["first_name", "age"]
 data = [("bob", 47), ("li", 23), ("leonard", 51)]
 # rdd = spark.sparkContext.parallelize(data)
 # df = rdd.toDF(columns)
 df = spark.createDataFrame(data,columns)
-df.write.format("delta").save("/FileStore/delta_table1")
+delta_table = DeltaTable.forPath(spark, "/FileStore/delta_table1")
+
+# Drop the Delta Lake table
+delta_table.delete()
+df.write.format("delta").mode("overwrite").save("/FileStore/delta_table1")
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -249,3 +287,54 @@ display(mod_df)
 # COMMAND ----------
 
 display(dbutils.fs.ls('/databricks-datasets/samples'))
+
+# COMMAND ----------
+
+data = [{"emp_id":1,"first_name":"Melissa","last_name":"Parks","Address":"19892 Williamson Causeway Suite 737\nKarenborough, IN 11372","phone_number":"001-372-612-0684","isContractor":"false"},
+{"emp_id":2,"first_name":"Laura","last_name":"Delgado","Address":"93922 Rachel Parkways Suite 717\nKaylaville, GA 87563","phone_number":"001-759-461-3454x80784","isContractor":"false"},
+{"emp_id":3,"first_name":"Luis","last_name":"Barnes","Address":"32386 Rojas Springs\nDicksonchester, DE 05474","phone_number":"127-420-4928","isContractor":"false"},
+{"emp_id":4,"first_name":"Jonathan","last_name":"Wilson","Address":"682 Pace Springs Apt. 011\nNew Wendy, GA 34212","phone_number":"761.925.0827","isContractor":"true"},
+{"emp_id":5,"first_name":"Kelly","last_name":"Gomez","Address":"4780 Johnson Tunnel\nMichaelland, WI 22423","phone_number":"+1-303-418-4571","isContractor":"false"},
+{"emp_id":6,"first_name":"Robert","last_name":"Smith","Address":"04171 Mitchell Springs Suite 748\nNorth Juliaview, CT 87333","phone_number":"261-155-3071x3915","isContractor":"true"},
+{"emp_id":7,"first_name":"Glenn","last_name":"Martinez","Address":"4913 Robert Views\nWest Lisa, ND 75950","phone_number":"001-638-239-7320x4801","isContractor":"false"},
+{"emp_id":8,"first_name":"Teresa","last_name":"Estrada","Address":"339 Scott Valley\nGonzalesfort, PA 18212","phone_number":"435-600-3162","isContractor":"false"},
+{"emp_id":9,"first_name":"Karen","last_name":"Spencer","Address":"7284 Coleman Club Apt. 813\nAndersonville, AS 86504","phone_number":"484-909-3127","isContractor":"true"},
+{"emp_id":10,"first_name":"Daniel","last_name":"Foley","Address":"621 Sarah Lock Apt. 537\nJessicaton, NH 95446","phone_number":"457-716-2354x4945","isContractor":"true"},
+{"emp_id":11,"first_name":"Amy","last_name":"Stevens","Address":"94661 Young Lodge Suite 189\nCynthiamouth, PR 01996","phone_number":"241.375.7901x6915","isContractor":"true"},
+{"emp_id":12,"first_name":"Nicholas","last_name":"Aguirre","Address":"7474 Joyce Meadows\nLake Billy, WA 40750","phone_number":"495.259.9738","isContractor":"true"},
+{"emp_id":13,"first_name":"John","last_name":"Valdez","Address":"686 Brian Forges Suite 229\nSullivanbury, MN 25872","phone_number":"+1-488-011-0464x95255","isContractor":"false"},
+{"emp_id":14,"first_name":"Michael","last_name":"West","Address":"293 Jones Squares Apt. 997\nNorth Amandabury, TN 03955","phone_number":"146.133.9890","isContractor":"true"},
+{"emp_id":15,"first_name":"Perry","last_name":"Mcguire","Address":"2126 Joshua Forks Apt. 050\nPort Angela, MD 25551","phone_number":"001-862-800-3814","isContractor":"true"},
+{"emp_id":16,"first_name":"James","last_name":"Munoz","Address":"74019 Banks Estates\nEast Nicolefort, GU 45886","phone_number":"6532485982","isContractor":"false"},
+{"emp_id":17,"first_name":"Todd","last_name":"Barton","Address":"2795 Kelly Shoal Apt. 500\nWest Lindsaytown, TN 55404","phone_number":"079-583-6386","isContractor":"true"},
+{"emp_id":18,"first_name":"Christopher","last_name":"Noble","Address":"Unit 7816 Box 9004\nDPO AE 29282","phone_number":"215-060-7721","isContractor":"true"},
+{"emp_id":19,"first_name":"Sandy","last_name":"Hunter","Address":"7251 Sarah Creek\nWest Jasmine, CO 54252","phone_number":"8759007374","isContractor":"false"},
+{"emp_id":20,"first_name":"Jennifer","last_name":"Ballard","Address":"77628 Owens Key Apt. 659\nPort Victorstad, IN 02469","phone_number":"+1-137-420-7831x43286","isContractor":"true"},
+{"emp_id":21,"first_name":"David","last_name":"Morris","Address":"192 Leslie Groves Apt. 930\nWest Dylan, NY 04000","phone_number":"990.804.0382x305","isContractor":"false"},
+{"emp_id":22,"first_name":"Paula","last_name":"Jones","Address":"045 Johnson Viaduct Apt. 732\nNorrisstad, AL 12416","phone_number":"+1-193-919-7527x2207","isContractor":"true"},
+{"emp_id":23,"first_name":"Lisa","last_name":"Thompson","Address":"1295 Judy Ports Suite 049\nHowardstad, PA 11905","phone_number":"(623)577-5982x33215","isContractor":"true"},
+{"emp_id":24,"first_name":"Vickie","last_name":"Johnson","Address":"5247 Jennifer Run Suite 297\nGlenberg, NC 88615","phone_number":"708-367-4447x9366","isContractor":"false"},
+{"emp_id":25,"first_name":"John","last_name":"Hamilton","Address":"5899 Barnes Plain\nHarrisville, NC 43970","phone_number":"341-467-5286x20961","isContractor":"false"}]
+df = spark.createDataFrame(data)
+
+# COMMAND ----------
+
+display(df)
+
+# COMMAND ----------
+
+
+from pyspark.sql.functions import sha2,concat_ws,lit,col,when
+df = df.withColumn("emp_key", sha2(concat_ws("||", col("emp_id"), col("first_name"), col("last_name"), col("Address"),
+            col("phone_number"), col("isContractor")), 256))
+display(df)
+
+# COMMAND ----------
+
+df = df.withColumn("isCurrent", lit('true')).withColumn("end_date",lit("Null")).withColumn("delete_flag", lit("false"))
+display(df)
+
+# COMMAND ----------
+
+df = df.withColumn("isContractor", when( df["emp_id"] == lit(12), lit("false")).otherwise(df["isContractor"])    )
+display(df)

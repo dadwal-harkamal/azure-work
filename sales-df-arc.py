@@ -1,6 +1,6 @@
 # Databricks notebook source
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import concat_ws,year,col
+from pyspark.sql.functions import concat_ws,year,col,month,to_date,unix_timestamp,from_unixtime,lit
 
 # Create a SparkSession
 spark = SparkSession.builder.appName("sales_example").getOrCreate()
@@ -21,6 +21,36 @@ data = [
 
 # Create a DataFrame
 df = spark.createDataFrame(data, ["OrderID", "Product", "Date", "Price", "Quantity", "FirstName", "MiddleName", "LastName"])
-df = df.withColumn("Year", year(col("Date")))
+df = df.withColumn("Year", year(col("Date"))).withColumn("month",month(col("date")))
+
 # Show the DataFrame
+
 df.show()
+
+# COMMAND ----------
+
+spark.conf.set(
+    "fs.azure.account.key.hpldevarmdlsuw02.dfs.core.windows.net","oW1G5qzJDuQdK1dlRDunh2UbJXIja+tQC1d6FpAwJVaTYIgahR2V4v+1KtOzjmnFEpbh9TpsiJBx+AStHqdW0w=="
+    )
+
+# COMMAND ----------
+
+sales_path = "abfss://bronze@hpldevarmdlsuw02.dfs.core.windows.net/sales"
+spark.conf.set("spark.sql.legacy.timeParserPolicy", "LEGACY")
+sales_df = spark.read.csv(sales_path,inferSchema=True,header=True)
+# sales_df = sales_df.withColumn("ORDERDATE",to_date(unix_timestamp(col("ORDERDATE"), "MM/dd/yyyy H:mm").cast("timestamp")))
+sales_df = sales_df.withColumn("ORDERDATE",to_date(col("ORDERDATE"), "MM/dd/yyyy H:mm"))
+sales_df = sales_df.withColumn("MONTH", month(col("ORDERDATE")))
+sales_df = sales_df.groupby("YEAR_ID","MONTH").sum("SALES").withColumnRenamed("sum(SALES)","Total_Sales")
+sales_df
+# sales_df = sales_df.withColumn("YEAR",year(col("ORDERDATE")))
+# print(sales_df.count())
+display(sales_df)
+
+# COMMAND ----------
+
+df = sales_df.groupby()
+
+# COMMAND ----------
+
+
